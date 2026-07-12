@@ -1,8 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { User } from '@/types';
+import React, { createContext, useContext, useCallback, useEffect, useState, ReactNode } from 'react';
+import { User, AuthData } from '@/types';
 import { authAPI } from '@/services/auth';
+
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
 
 interface AuthContextType {
   user: User | null;
@@ -21,47 +24,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
-    if (token && savedUser) {
+    const init = async () => {
       try {
-        setUser(JSON.parse(savedUser));
+        const token = localStorage.getItem(TOKEN_KEY);
+        const cached = localStorage.getItem(USER_KEY);
+        if (token && cached) setUser(JSON.parse(cached));
+
+        if (token) {
+          const { data } = await authAPI.getProfile();
+          const fresh = data as User;
+          setUser(fresh);
+          localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+        }
       } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(USER_KEY);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+    init();
   }, []);
 
+  const persist = (u: User, token: string) => {
+    localStorage.setItem(TOKEN_KEY, token);
+    localStorage.setItem(USER_KEY, JSON.stringify(u));
+    setUser(u);
+  };
+
   const login = useCallback(async (email: string, password: string) => {
-    const res = await authAPI.login({ email, password });
-    if (res.success && res.data) {
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
-      setUser(res.data);
-    }
+    const { data } = await authAPI.login({ email, password });
+    const auth = data as AuthData;
+    persist(
+      { _id: auth._id, name: auth.name, email: auth.email, avatar: auth.avatar, role: auth.role },
+      auth.token
+    );
   }, []);
 
   const register = useCallback(async (name: string, email: string, password: string) => {
-    const res = await authAPI.register({ name, email, password });
-    if (res.success && res.data) {
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data));
-      setUser(res.data);
-    }
+    const { data } = await authAPI.register({ name, email, password });
+    const auth = data as AuthData;
+    persist(
+      { _id: auth._id, name: auth.name, email: auth.email, avatar: auth.avatar, role: auth.role },
+      auth.token
+    );
   }, []);
 
   const logout = useCallback(async () => {
-    await authAPI.logout();
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    try {
+      await authAPI.logout();
+    } catch {
+      // ignore network errors on logout
+    }
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
     setUser(null);
   }, []);
 
   const updateUser = useCallback((updatedUser: User) => {
+    localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
   }, []);
 
   return (
