@@ -1,19 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import toast from 'react-hot-toast';
+import { adminAPI } from '@/services/admin';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
 
 export default function ContactPage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, formState: { errors }, reset } = useForm();
 
-  const onSubmit = () => {
-    toast.success('Message sent! We will get back to you soon.');
-    reset();
+  const onSubmit = async (data: any) => {
+    setIsSubmitting(true);
+    try {
+      await adminAPI.contact(data);
+      toast.success('Message sent! We will get back to you soon.');
+      reset();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to send message');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -43,12 +54,12 @@ export default function ContactPage() {
         <div className="lg:col-span-2">
           <form onSubmit={handleSubmit(onSubmit)} className="p-8 rounded-2xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input label="Name" placeholder="Your name" error={errors.name?.message as string} {...register('name', { required: true })} />
-              <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message as string} {...register('email', { required: true })} />
+              <Input label="Name" placeholder="Your name" error={errors.name?.message as string} {...register('name', { required: 'Name is required' })} />
+              <Input label="Email" type="email" placeholder="you@example.com" error={errors.email?.message as string} {...register('email', { required: 'Email is required' })} />
             </div>
-            <Input label="Subject" placeholder="How can we help?" error={errors.subject?.message as string} {...register('subject', { required: true })} />
-            <Textarea label="Message" placeholder="Your message..." error={errors.message?.message as string} {...register('message', { required: true })} className="min-h-[150px]" />
-            <Button type="submit"><Send className="w-4 h-4" /> Send Message</Button>
+            <Input label="Subject" placeholder="How can we help?" error={errors.subject?.message as string} {...register('subject', { required: 'Subject is required' })} />
+            <Textarea label="Message" placeholder="Your message..." error={errors.message?.message as string} {...register('message', { required: 'Message is required' })} className="min-h-[150px]" />
+            <Button type="submit" isLoading={isSubmitting}><Send className="w-4 h-4" /> Send Message</Button>
           </form>
         </div>
       </div>

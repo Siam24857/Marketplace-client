@@ -84,5 +84,14 @@ export interface DashboardStats {
   totalItems: number;
   totalValue: number;
   avgPrice: number;
-  categoryCounts: { _id: string; count: number }[];
+  categoryCounts: { category: string; count: number }[];
+}
+
+export interface AdminStats {
+  totalUsers: number;
+  totalItems: number;
+  totalValue: number;
+  avgPrice: number;
+  categoryCounts: { category: string; count: number }[];
+  recentUsers: User[];
 }

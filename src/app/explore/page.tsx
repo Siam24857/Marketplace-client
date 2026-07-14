@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -27,8 +27,17 @@ function ExploreContent() {
     sort: 'createdAt',
     order: 'desc',
   });
+  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setFilters((prev) => ({ ...prev, search: searchInput }));
+      setPage(1);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   const { data, isLoading } = useItems(filters, page);
   const items = data?.data || [];
@@ -66,6 +75,7 @@ function ExploreContent() {
 
   const clearFilters = () => {
     setFilters({ search: '', category: '', minPrice: '', maxPrice: '', minRating: '', location: '', sort: 'createdAt', order: 'desc' });
+    setSearchInput('');
     setPage(1);
   };
 
@@ -88,8 +98,8 @@ function ExploreContent() {
             <input
               type="text"
               placeholder="Search products..."
-              value={filters.search || ''}
-              onChange={(e) => updateFilter('search', e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="input pl-10"
             />
           </div>
@@ -130,7 +140,7 @@ function ExploreContent() {
       {hasActiveFilters && (
         <div className="flex flex-wrap items-center gap-2 mb-6">
           <span className="text-sm text-gray-500">Active filters:</span>
-          {filters.search && <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium flex items-center gap-1 dark:bg-primary-950/50">Search: {filters.search} <X className="w-3 h-3 cursor-pointer" onClick={() => updateFilter('search', '')} /></span>}
+          {filters.search && <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium flex items-center gap-1 dark:bg-primary-950/50">Search: {filters.search} <X className="w-3 h-3 cursor-pointer" onClick={() => { setSearchInput(''); updateFilter('search', ''); }} /></span>}
           {filters.category && <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium flex items-center gap-1 dark:bg-primary-950/50">{filters.category} <X className="w-3 h-3 cursor-pointer" onClick={() => updateFilter('category', '')} /></span>}
           {filters.minPrice && <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium flex items-center gap-1 dark:bg-primary-950/50">Min: ${filters.minPrice} <X className="w-3 h-3 cursor-pointer" onClick={() => updateFilter('minPrice', '')} /></span>}
           {filters.maxPrice && <span className="px-3 py-1 rounded-full bg-primary-50 text-primary-600 text-xs font-medium flex items-center gap-1 dark:bg-primary-950/50">Max: ${filters.maxPrice} <X className="w-3 h-3 cursor-pointer" onClick={() => updateFilter('maxPrice', '')} /></span>}

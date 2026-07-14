@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X, ChevronDown, LogOut, User, Plus, LayoutDashboard, Settings } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, User, Plus, LayoutDashboard, Settings, Shield, Users, Package, BarChart3 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { cn, getInitials } from '@/utils';
 import { NAV_LINKS } from '@/constants';
@@ -14,6 +14,7 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const pathname = usePathname();
   const { user, isAuthenticated, logout } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   const handleLogout = async () => {
     await logout();
@@ -47,6 +48,19 @@ export default function Navbar() {
                 {link.label}
               </Link>
             ))}
+            {isAuthenticated && isAdmin && (
+              <Link
+                href="/admin"
+                className={cn(
+                  'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                  pathname.startsWith('/admin')
+                    ? 'text-red-600 bg-red-50 dark:bg-red-950/50'
+                    : 'text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950/30'
+                )}
+              >
+                <span className="flex items-center gap-1"><Shield className="w-3.5 h-3.5" /> Admin</span>
+              </Link>
+            )}
           </div>
 
           <div className="hidden md:flex items-center gap-3">
@@ -64,6 +78,7 @@ export default function Navbar() {
                     )}
                   </div>
                   <span className="text-sm font-medium">{user?.name}</span>
+                  {isAdmin && <span className="text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full">Admin</span>}
                   <ChevronDown className="w-4 h-4" />
                 </button>
 
@@ -74,15 +89,37 @@ export default function Navbar() {
                       <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-800">
                         <p className="text-sm font-medium">{user?.name}</p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
+                        {isAdmin && <span className="text-[10px] font-bold bg-red-100 text-red-600 dark:bg-red-950/50 px-1.5 py-0.5 rounded-full mt-1 inline-block">Admin</span>}
                       </div>
-                      <Link href="/dashboard" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <LayoutDashboard className="w-4 h-4" />
-                        Dashboard
-                      </Link>
-                      <Link href="/dashboard/add-item" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                        <Plus className="w-4 h-4" />
-                        Add Item
-                      </Link>
+
+                      {isAdmin ? (
+                        <>
+                          <Link href="/admin" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <Shield className="w-4 h-4 text-red-500" />
+                            Admin Dashboard
+                          </Link>
+                          <Link href="/admin/users" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <Users className="w-4 h-4" />
+                            Manage Users
+                          </Link>
+                          <Link href="/admin/items" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <Package className="w-4 h-4" />
+                            All Items
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <Link href="/dashboard" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <LayoutDashboard className="w-4 h-4" />
+                            Dashboard
+                          </Link>
+                          <Link href="/dashboard/add-item" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                            <Plus className="w-4 h-4" />
+                            Add Item
+                          </Link>
+                        </>
+                      )}
+
                       <Link href="/dashboard/profile" onClick={() => setShowDropdown(false)} className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                         <User className="w-4 h-4" />
                         Profile
@@ -140,11 +177,30 @@ export default function Navbar() {
               ))}
               {isAuthenticated ? (
                 <>
-                  <Link href="/dashboard" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
-                    Dashboard
-                  </Link>
-                  <Link href="/dashboard/add-item" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
-                    Add Item
+                  {isAdmin ? (
+                    <>
+                      <Link href="/admin" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20">
+                        Admin Dashboard
+                      </Link>
+                      <Link href="/admin/users" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
+                        Manage Users
+                      </Link>
+                      <Link href="/admin/items" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
+                        All Items
+                      </Link>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/dashboard" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
+                        Dashboard
+                      </Link>
+                      <Link href="/dashboard/add-item" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
+                        Add Item
+                      </Link>
+                    </>
+                  )}
+                  <Link href="/dashboard/profile" onClick={() => setIsOpen(false)} className="px-4 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-white">
+                    Profile
                   </Link>
                   <button onClick={handleLogout} className="px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 text-left">
                     Logout

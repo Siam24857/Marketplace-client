@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { itemsAPI } from '@/services/items';
 import { manageAPI } from '@/services/user';
+import { adminAPI } from '@/services/admin';
 import { FilterState } from '@/types';
 
 export function useItems(filters: Partial<FilterState>, page = 1) {
@@ -40,6 +41,17 @@ export function useCreateItem() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: itemsAPI.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+      queryClient.invalidateQueries({ queryKey: ['manage-items'] });
+    },
+  });
+}
+
+export function useUpdateItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<any> }) => itemsAPI.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['items'] });
       queryClient.invalidateQueries({ queryKey: ['manage-items'] });
@@ -90,6 +102,58 @@ export function useAddReview() {
       itemsAPI.addReview(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    },
+  });
+}
+
+export function useAdminUsers(page = 1, search = '') {
+  return useQuery({
+    queryKey: ['admin-users', page, search],
+    queryFn: () => adminAPI.getAllUsers(page, 10, search),
+  });
+}
+
+export function useAdminItems(page = 1, search = '') {
+  return useQuery({
+    queryKey: ['admin-items', page, search],
+    queryFn: () => adminAPI.getAllItems(page, 10, search),
+  });
+}
+
+export function useAdminStats() {
+  return useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: () => adminAPI.getStats(),
+  });
+}
+
+export function useAdminDeleteUser() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+    },
+  });
+}
+
+export function useAdminDeleteItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => adminAPI.deleteItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-items'] });
+      queryClient.invalidateQueries({ queryKey: ['items'] });
+    },
+  });
+}
+
+export function useAdminUpdateRole() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) => adminAPI.updateRole(id, role),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
   });
 }

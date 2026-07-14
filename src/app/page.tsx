@@ -1,12 +1,15 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight, Zap, Shield, Globe, Users, Star, TrendingUp, Package, ChevronRight, CheckCircle, Heart, Clock, Award } from 'lucide-react';
+import toast from 'react-hot-toast';
 import Button from '@/components/ui/Button';
 import ItemCard from '@/components/cards/ItemCard';
 import { useItems } from '@/hooks/useQueries';
 import { formatPrice } from '@/utils';
+import { adminAPI } from '@/services/admin';
 
 const features = [
   { icon: <Zap className="w-6 h-6" />, title: 'Lightning Fast', desc: 'List and discover products in seconds with our optimized platform.' },
@@ -54,6 +57,23 @@ const categories = [
 
 export default function HomePage() {
   const { data } = useItems({}, 1);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+
+  const handleNewsletter = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newsletterEmail) return;
+    setNewsletterLoading(true);
+    try {
+      await adminAPI.subscribe(newsletterEmail);
+      toast.success('Subscribed successfully!');
+      setNewsletterEmail('');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Subscription failed');
+    } finally {
+      setNewsletterLoading(false);
+    }
+  };
 
   return (
     <div>
@@ -274,13 +294,16 @@ export default function HomePage() {
             <p className="text-white/80 mb-8 max-w-md mx-auto">
               Subscribe to our newsletter for the latest products, deals, and marketplace insights.
             </p>
-            <form className="flex gap-3 max-w-md mx-auto" onSubmit={(e) => e.preventDefault()}>
+            <form className="flex gap-3 max-w-md mx-auto" onSubmit={handleNewsletter}>
               <input
                 type="email"
                 placeholder="Enter your email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
                 className="flex-1 px-4 py-3 rounded-xl bg-white/20 border border-white/30 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/50 backdrop-blur-sm"
+                required
               />
-              <Button className="bg-white text-primary-600 hover:bg-gray-100 font-semibold">Subscribe</Button>
+              <Button className="bg-white text-primary-600 hover:bg-gray-100 font-semibold" isLoading={newsletterLoading}>Subscribe</Button>
             </form>
           </motion.div>
         </div>

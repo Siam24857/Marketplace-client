@@ -77,7 +77,7 @@ export default function LoginPage() {
                 <input type="checkbox" className="rounded border-gray-300" />
                 Remember me
               </label>
-              <Link href="/auth/login" className="text-sm text-primary-600 hover:text-primary-700">Forgot password?</Link>
+              <Link href="/auth/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">Forgot password?</Link>
             </div>
 
             <Button type="submit" className="w-full" isLoading={isSubmitting}>Sign In</Button>
